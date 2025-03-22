@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NASA Deep Space Image Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h2>NASA Deep Space Image Generator</h2>
+
+  <label for="querySelect">Choose Object Type:</label>
+  <select id="querySelect">
+    <option value="deep space">All Deep Space</option>
+    <option value="galaxy">Galaxy</option>
+    <option value="nebula">Nebula</option>
+    <option value="supernova">Supernova</option>
+    <option value="exoplanet">Exoplanet</option>
+    <option value="star cluster">Star Cluster</option>
+  </select>
+
+  <br><br>
+  <label for="customSearch">Or Enter Custom Search:</label>
+  <input type="text" id="customSearch" placeholder="e.g., orion nebula" />
+
+  <br><br>
+  <button onclick="fetchImage()">Get Deep Space Image</button>
+
+  <div id="loading" style="display:none;">
+    <p>Loading image...</p>
+    <img src="https://i.gifer.com/ZKZg.gif" width="80" alt="Loading Spinner" />
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    let currentPage = 1;
+
+    function fetchImage(page = 1) {
+      const dropdownQuery = document.getElementById('querySelect').value;
+      const customQuery = document.getElementById('customSearch').value.trim();
+      const finalQuery = customQuery || dropdownQuery;
+
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('result').innerHTML = '';
+      currentPage = page;
+
+      fetch('/get_image?query=' + encodeURIComponent(finalQuery) + '&page=' + currentPage)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('loading').style.display = 'none';
+
+          if (data.error) {
+            document.getElementById('result').innerHTML = '<p>' + data.error + '</p>';
+          } else {
+            document.getElementById('result').innerHTML = `
+              <img src="${data.image_url}" alt="NASA Image" width="500" /><br/>
+              <b>Telescope:</b> ${data.telescope}<br/>
+              <b>Date:</b> ${data.observation_date}<br/>
+              <b>Object:</b> ${data.object_name}<br/>
+              <p>${data.description}</p>
+              <div>
+                <button onclick="changePage(-1)">Previous Page</button>
+                <button onclick="changePage(1)">Next Page</button>
+              </div>
+            `;
+          }
+        });
+    }
+
+    function changePage(step) {
+      const nextPage = currentPage + step;
+      if (nextPage < 1) return;
+      fetchImage(nextPage);
+    }
+  </script>
+</body>
+</html>
